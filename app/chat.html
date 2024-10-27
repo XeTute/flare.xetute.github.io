@@ -209,9 +209,11 @@
                     {
                         document.getElementById('listchats_interface').style.display = 'flex';
 
-                        const tmp_keys = Object.keys(authData.record.chats);
+                        let tmp_keys;
+                        try { tmp_keys = Object.keys(authData.record.chats); }
+                        catch {}
 
-                        if (tmp_keys.length === 0)
+                        if (tmp_keys?.length === 0 || authData.record.chats === null)
                         {
                             document.getElementById('chats_div').innerHTML +=
                             '<h3>Hello, Friend...</h3><p>Nothing to see here. <button onclick="window.location.href=\'./characters.html\'">Start a Chat!</button></p>';

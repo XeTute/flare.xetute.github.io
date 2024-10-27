@@ -39,7 +39,8 @@
     <script>
         const pb = new PocketBase(link);
         let c_form = false; // false = login, true = register
-        let _refer = './app/chat.html';
+        let _refer_login = './app/chat.html';
+        let _refer_register = './app/gs.html';
         
         let email = undefined;
         let password = undefined;
@@ -58,7 +59,7 @@
                     document.getElementById('error').innerHTML = '<p style="color:green">Authorized Automatically =)</p>';
                     localStorage.setItem('email', email);
                     localStorage.setItem('password', password);
-                    window.location.href = _refer;
+                    window.location.href = _refer_login;
                 }
             }
         }
@@ -102,7 +103,7 @@
                 document.getElementById('error').innerHTML = '<p style="color:green">Authorized =)</p>';
                 localStorage.setItem('email', email);
                 localStorage.setItem('password', password);
-                window.location.href = _refer;
+                window.location.href = _refer_register;
             }
             else document.getElementById('error').textContent = 'Failed to Authorize =(';
         }
@@ -118,7 +119,7 @@
                 document.getElementById('error').innerHTML = '<p style="color:green">Authorized =)</p>';
                 localStorage.setItem('email', email);
                 localStorage.setItem('password', password);
-                window.location.href = _refer;
+                window.location.href = _refer_login;
             }
             else document.getElementById('error').textContent = 'Failed to Authorize =(';
         }
