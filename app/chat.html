@@ -54,6 +54,31 @@
                 color: #ff64648a;
                 background-color: #ff64648a;
             }
+
+            loader
+            {
+              border: 2px solid #000;
+              border-radius: 50%;
+              border-top: 2px solid #fff;
+              -webkit-animation: spin .8s ease-in-out infinite; /* Safari */
+              animation: spin .8s ease-in-out infinite;
+              width: 50px;
+              height: 50px;
+              display: none;
+              justify-self: center;
+            }
+
+            @-webkit-keyframes spin
+            {
+              0% { -webkit-transform: rotate(0deg); }
+              100% { -webkit-transform: rotate(359deg); }
+            }
+
+            @keyframes spin
+            {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(359deg); }
+            }
         </style>
     </head>
     <body onload="auto_auth()" style="overflow-x: hidden;">
@@ -78,6 +103,7 @@
             <p style="margin: 5px; color: red;" id="errorsending"></p>
             <div style="position: absolute; bottom: 0%; flex-direction: row; justify-content: center; height: 10%; width: 100%;">
                 <textarea placeholder="Send something..." id="message" maxlength="1024" style="width: 80%; text-align: center; margin: 0px;"></textarea>
+                <loader id="loader"></loader>
                 <button onclick="process_message()"><img src="send.png" style="width: 1.1rem; height: 1.1rem; display: flex;"/></button>
             </div>
         </div>
@@ -254,6 +280,8 @@
                 document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
 
                 document.getElementById('message').value = '';
+                document.getElementById('message').style.display = 'none';
+                document.getElementById('loader').style.display = 'flex';
 
                 let response = undefined;
                 let data = undefined;
@@ -291,6 +319,8 @@
                     document.getElementById('messages_div').innerHTML = document.getElementById('messages_div').innerHTML.substr(0, document.getElementById('messages_div').innerHTML.length - format_message(usermessage).length);
                 }
             }
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('message').style.display = 'flex';
             document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
             processing = false;
         }
