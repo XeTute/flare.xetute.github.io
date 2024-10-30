@@ -124,7 +124,7 @@
                 catch { console.log(''); }
             
                 if (authData === undefined) window.location.href = '../index.html';
-                if (authData.record.email === email)
+                if (authData.record.email === email && authData.record.verified)
                 {
                     localStorage.setItem('email', email);
                     localStorage.setItem('password', password);

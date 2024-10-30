@@ -75,7 +75,7 @@
                 catch { console.log(''); }
 
                 if (authData === undefined) window.location.href = '../index.html';
-                if (authData.record.email === email)
+                if (authData.record.email === email && authData.record.verified)
                 {
                     document.getElementById('notice').innerHTML = '<p style="color:green">It\'s nice to see you.<br>We authorized you automatically.</p>';
                     localStorage.setItem('email', email);

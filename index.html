@@ -41,6 +41,7 @@
         let c_form = false; // false = login, true = register
         let _refer_login = './app/chat.html';
         let _refer_register = './app/gs.html';
+        let _new = false;
         
         let email = undefined;
         let password = undefined;
@@ -53,8 +54,8 @@
                 email = localStorage.getItem('email');
                 password = localStorage.getItem('password');
 
-                authData = await pb.collection('users').authWithPassword(email, password);
-                if (authData.record.email === email)
+                try { authData = await pb.collection('users').authWithPassword(email, password); } catch{}
+                if (authData?.record?.email === email && authData?.record?.verified)
                 {
                     document.getElementById('error').innerHTML = '<p style="color:green">Authorized Automatically =)</p>';
                     localStorage.setItem('email', email);
@@ -95,17 +96,18 @@
             }
             else document.getElementById('error').textContent = '';
 
-            await pb.collection('users').create({"password": _password[0], "passwordConfirm": _password[1], "email": email});
-            authData = await pb.collection('users').authWithPassword(email, _password[0]); // login after register
-
-            if (authData.record.email === email)
+            try
             {
-                document.getElementById('error').innerHTML = '<p style="color:green">Authorized =)</p>';
-                localStorage.setItem('email', email);
-                localStorage.setItem('password', password);
-                window.location.href = _refer_register;
+                await pb.collection('users').create({"password": _password[0], "passwordConfirm": _password[1], "email": email});
+                await pb.collection('users').requestVerification(email);
+                document.getElementById('error').innerHTML = '<p style="color:green">Sent verification Email</p>';
+                switch_forms();
             }
-            else document.getElementById('error').textContent = 'Failed to Authorize =(';
+            catch
+            {
+                document.getElementById('error').innerHTML = '<p style="color:red">Failed to create Account</p>'
+            }
+            _new = true;
         }
 
         async function signIn()
@@ -113,15 +115,20 @@
             email = document.getElementById('loginEmail').value;
             password = document.getElementById('loginPassword').value;
 
-            authData = await pb.collection('users').authWithPassword(email, password);
-            if (authData.record.email === email)
+            try
             {
-                document.getElementById('error').innerHTML = '<p style="color:green">Authorized =)</p>';
-                localStorage.setItem('email', email);
-                localStorage.setItem('password', password);
-                window.location.href = _refer_login;
+                authData = await pb.collection('users').authWithPassword(email, password);
+                if (authData.record.email === email && authData.record.verified)
+                {
+                    document.getElementById('error').innerHTML = '<p style="color:green">Authorized =)</p>';
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('password', password);
+                    window.location.href = _new ? _refer_register : _refer_login;
+                }
+                else if (!authData.record.verified) document.getElementById('error').innerHTML = '<p style="color:red">Verify your Email</p>';
+                else document.getElementById('error').textContent = 'Failed to Authorize =(';
             }
-            else document.getElementById('error').textContent = 'Failed to Authorize =(';
+            catch { document.getElementById('error').innerHTML = '<p style="color:red">Failed to Authorize =(</p>'; }
         }
 
     </script>
