@@ -105,12 +105,12 @@
                 await pb.collection('users').requestVerification(email);
                 document.getElementById('error').innerHTML = '<p style="color:green">Sent verification Email</p>';
                 switch_forms();
+                _new = true;
             }
             catch
             {
                 document.getElementById('error').innerHTML = '<p style="color:red">Failed to create Account</p>'
             }
-            _new = true;
         }
 
         async function signIn()
