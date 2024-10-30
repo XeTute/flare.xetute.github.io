@@ -98,7 +98,9 @@
                     <h3 id="name" style="display: flex;"></h3>
                 </div>
             </div>
-            <div style="flex-direction: column; justify-content: flex-start; width: 80%; overflow-y: auto; height: 80%; gap: 20px;" id="messages_div"></div>
+            <div style="flex-direction: column; justify-content: flex-start; width: 80%; overflow-y: auto; height: 80%; gap: 20px;" id="messages_div">
+                <loader id="messages_loader" style="display: flex;"></loader>
+            </div>
             <h1 style="color: red"></h1>
             <p style="margin: 5px; color: red;" id="errorsending"></p>
             <div style="position: absolute; bottom: 0%; flex-direction: row; justify-content: center; height: 10%; width: 100%;">
@@ -217,9 +219,10 @@
                         character.id = decodeURIComponent(location.search.substring(1), {});
 
                         document.getElementById('name').textContent = character.name;
-
                         format_sysprompt(authData.record.persona, character.persona);
 
+                        document.getElementById('messages_div').innerHTML +=
+                        '<div style="text-align: center; background: #222" class="message">' + convertMarkdown(escapeHtml(character.persona)) + '</div>'
                         for (let i = 0; i < authData.record.chats[character.id].messages.user.length; ++i)
                         {
                             document.getElementById('messages_div').innerHTML += format_message(authData.record.chats[character.id].messages.user[i]);
@@ -230,6 +233,7 @@
                         }
                         document.getElementById('message_interface').style.display = 'flex';
                         document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
+                        document.getElementById('messages_loader').style.display = 'none';
                     }
                     else
                     {
@@ -293,13 +297,14 @@
                 catch
                 {
                     document.getElementById('errorsending').textContent = 'Error Sending';
+                    document.getElementById('message').value = usermessage;
                     chathistory.messages[0].content.substr(0, chathistory.messages[0].content.length - 23);
                     document.getElementById('messages_div').innerHTML = document.getElementById('messages_div').innerHTML.substr(0, document.getElementById('messages_div').innerHTML.length - format_message(usermessage).length);
                 }
 
                 if (data && data.choices && data.choices.length > 0)
                 {
-                    const botmessage = data.choices[0].message.content;
+                    const botmessage = data.choices[0].message.content.trim();
                     add_message(botmessage, false);
                     document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
 

@@ -29,7 +29,7 @@
             </div>
             <div style="flex-direction: row; margin: 10px; padding: 8px; border: 1px solid #fff;">
                 <p>Username: </p>
-                <input id="username" style="margin-left: 5px;"/>
+                <input id="username" style="margin-left: 5px;" autocomplete="off"/>
                 <button onclick="changeUsername()">Change</button>
             </div>
             <p id="changeusernamenote"></p>
@@ -37,8 +37,8 @@
                 <strong>Update</strong>
                 <button onclick="showChangePassword()" style="margin: 10px;" id="changepasswordtext">Update Password</button>
                 <div style="margin: 10px; padding: 8px; border: 1px solid #fff; display: none;" id="changepasswordblock">
-                    <input id="newpassword0" maxlength="16" placeholder="New Password"/>
-                    <input id="newpassword1" maxlength="16" placeholder="New Password"/>
+                    <input id="newpassword0" maxlength="16" placeholder="New Password" autocomplete="off"/>
+                    <input id="newpassword1" maxlength="16" placeholder="New Password" autocomplete="off"/>
                     <button onclick="changePassword()">Confirm</button>
                     <p id="passwordchangeerror"></p>
                 </div>
