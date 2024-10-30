@@ -28,9 +28,9 @@
             <button onclick="register()">Sign Up</button>
         </div>
         <div style="margin-bottom: -20px; margin-top: 20px;">
-            <p id="error" style="font-size: 12.5px; color: red;"></p>
+            <p id="error" style="font-size: 12.5px;"></p>
             <p id="switch_txt" style="font-size: 12.5px; margin-bottom: 0px;">Not a part of the community yet?</p>
-            <button onclick="switch_forms()" style="font-size: 12.5px; border: none; margin: 0px; border-radius: 5px; padding: 5px;" id="switch_btn">Join in!</button>
+            <button onclick="switch_forms()" style="border: 0;" id="switch_btn">Join in!</button>
         </div>
         <a href="./ToS.html" style="text-decoration: none; position: absolute; bottom: 5%;">By using our services, you accept our ToS.</a>
     </div>
@@ -49,19 +49,22 @@
 
         async function auto_auth()
         {
-            if ( (localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null) )
+            if ((localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null))
             {
                 email = localStorage.getItem('email');
                 password = localStorage.getItem('password');
 
-                try { authData = await pb.collection('users').authWithPassword(email, password); } catch{}
-                if (authData?.record?.email === email && authData?.record?.verified)
+                try
                 {
-                    document.getElementById('error').innerHTML = '<p style="color:green">Authorized Automatically =)</p>';
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('password', password);
-                    window.location.href = _refer_login;
+                    authData = await pb.collection('users').authWithPassword(email, password);
+                    if (authData.record.email === email && authData.record.verified)
+                    {
+                        localStorage.setItem('email', email);
+                        localStorage.setItem('password', password);
+                        window.location.href = _refer_login;
+                    }
                 }
+                catch { }
             }
         }
 
@@ -91,10 +94,10 @@
             
             if (_password[0] !== _password[1])
             {
-                document.getElementById('error').textContent = 'Passwords do not match.';
+                document.getElementById('error').innerHTML = `<p style="color:red">Passwords don't match</p>`;
                 return;
             }
-            else document.getElementById('error').textContent = '';
+            else document.getElementById('error').innerHTML = ''; // For re-try
 
             try
             {
@@ -120,15 +123,14 @@
                 authData = await pb.collection('users').authWithPassword(email, password);
                 if (authData.record.email === email && authData.record.verified)
                 {
-                    document.getElementById('error').innerHTML = '<p style="color:green">Authorized =)</p>';
                     localStorage.setItem('email', email);
                     localStorage.setItem('password', password);
                     window.location.href = _new ? _refer_register : _refer_login;
                 }
                 else if (!authData.record.verified) document.getElementById('error').innerHTML = '<p style="color:red">Verify your Email</p>';
-                else document.getElementById('error').textContent = 'Failed to Authorize =(';
+                else throw '';
             }
-            catch { document.getElementById('error').innerHTML = '<p style="color:red">Failed to Authorize =(</p>'; }
+            catch { document.getElementById('error').innerHTML = '<p style="color:red">Failed to Authorize</p>'; }
         }
 
     </script>
