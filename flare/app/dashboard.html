@@ -49,7 +49,7 @@
                     <p id="changepersonanote"></p>
                     <button onclick="updatePersona()">Update Persona</button>
                 </div>
-                <a href="../ToS.html" style="text-decoration: none;">By using our sevices, you accept our ToS.</a>
+                <a href="../../ToS.html" style="text-decoration: none;">By using our sevices, you accept our ToS.</a>
             </div>
         </div>
     </body>
@@ -74,7 +74,7 @@
                 try { authData = await pb.collection('users').authWithPassword(email, password); }
                 catch { console.log(''); }
 
-                if (authData === undefined) window.location.href = '../../auth.html';
+                if (authData === undefined) window.location.href = '../../auth.html?./flare/app/gs.html;./flare/app/gs.html';
                 if (authData.record.email === email && authData.record.verified)
                 {
                     document.getElementById('notice').innerHTML = '<p style="color:green">It\'s nice to see you.<br>We authorized you automatically.</p>';
@@ -82,10 +82,10 @@
                     localStorage.setItem('password', password);
                     document.getElementById('persona').textContent = authData.record.persona;
                 }
-                else window.location.href = '../../auth.html';
+                else window.location.href = '../../auth.html?./flare/app/gs.html;./flare/app/gs.html';
                 document.getElementById('email').innerHTML = email;
             }
-            else window.location.href = '../../auth.html';
+            else window.location.href = '../../auth.html?./flare/app/gs.html;./flare/app/gs.html';
 
             if ( localStorage.getItem('username') === null ) localStorage.setItem('username', 'user');
             username = localStorage.getItem('username');
