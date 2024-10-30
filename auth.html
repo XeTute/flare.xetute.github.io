@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Authorisation | XeTute Technologies</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="Keywords" content="Login, Register, XeTute, XeTute Technologies, AI, LLM, Flare, Chat, Chatbot">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./basic.css">
+    <link rel="icon" type="image/png" href="logo.jpg"/>
+</head>
+<body onload="auto_auth()">
+    <div>
+        <h1 style="margin: 20px;">Hello, Friend.</h1>
+        <div id="loginForm">
+            <h2 style="margin-bottom: 10px;">Sign In</h2>
+            <input type="text" id="loginEmail" placeholder="Email" autocomplete="off" required>
+            <input type="password" id="loginPassword" placeholder="Password" autocomplete="off" required>
+            <button onclick="signIn()">Sign In</button>
+        </div>
+        <div id="registerForm" style="display: none;">
+            <h2 style="margin-bottom: 10px;">Sign Up</h2>
+            <input type="email" id="registerEmail" placeholder="Email" autocomplete="off" required>
+            <input type="password" id="registerPassword0" placeholder="Password" autocomplete="off" required>
+            <input type="password" id="registerPassword1" placeholder="Confirm Password" autocomplete="off" required>
+            <button onclick="register()">Sign Up</button>
+        </div>
+        <div style="margin-bottom: -20px; margin-top: 20px;">
+            <p id="error" style="font-size: 12.5px;"></p>
+            <p id="switch_txt" style="font-size: 12.5px; margin-bottom: 0px;">Not a part of the community yet?</p>
+            <button onclick="switch_forms()" style="border: 0;" id="switch_btn">Join in!</button>
+        </div>
+        <a href="../ToS.html" style="text-decoration: none; position: absolute; bottom: 5%;">By using our services, you accept our ToS.</a>
+    </div>
+
+    <script src="./pocketbase.umd.js"></script>
+    <script>
+        const pb = new PocketBase(link);
+        let c_form = false; // false = login, true = register
+        let _refer_login = undefined; // './flare/app/chat.html'
+        let _refer_register = undefined; // './flare/app/gs.html'
+        let _new = false;
+        
+        let email = undefined;
+        let password = undefined;
+        let authData = undefined;
+
+        async function auto_auth()
+        {
+            if (location.search)
+            {
+                const tmp = decodeURIComponent(location.search.substring(1), {});
+                if (tmp)
+                {
+                    _refer_login = tmp.substr(0, tmp.search(';'));
+                    _refer_register = tmp.substr(tmp.search(';'));
+                }
+                else window.open('https://www.xetute.com/', '_self').close();
+            } else window.open('https://www.xetute.com/', '_self').close();
+
+            if ((localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null))
+            {
+                email = localStorage.getItem('email');
+                password = localStorage.getItem('password');
+
+                try
+                {
+                    authData = await pb.collection('users').authWithPassword(email, password);
+                    if (authData.record.email === email && authData.record.verified)
+                    {
+                        localStorage.setItem('email', email);
+                        localStorage.setItem('password', password);
+                        window.location.href = _refer_login;
+                    }
+                }
+                catch { }
+            }
+        }
+
+        function switch_forms()
+        {
+            if (c_form)
+            {
+                document.getElementById('loginForm').style.display = 'flex';
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('switch_txt').textContent = 'Not a part of the community yet?';
+                document.getElementById('switch_btn').textContent = 'Join in!';
+            }
+            else
+            {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'flex'; 
+                document.getElementById('switch_txt').textContent = 'Already part of the community?';
+                document.getElementById('switch_btn').textContent = 'Join back in!';
+            }
+            c_form = !c_form;
+        }
+
+        async function register()
+        {
+            email = document.getElementById('registerEmail').value;
+            _password = [ document.getElementById('registerPassword0').value, document.getElementById('registerPassword1').value ];
+            
+            if (_password[0] !== _password[1])
+            {
+                document.getElementById('error').innerHTML = `<p style="color:red">Passwords don't match</p>`;
+                return;
+            }
+            else document.getElementById('error').innerHTML = ''; // For re-try
+
+            try
+            {
+                await pb.collection('users').create({"password": _password[0], "passwordConfirm": _password[1], "email": email});
+                await pb.collection('users').requestVerification(email);
+                document.getElementById('error').innerHTML = '<p style="color:green">Sent verification Email</p>';
+                switch_forms();
+                _new = true;
+            }
+            catch
+            {
+                document.getElementById('error').innerHTML = '<p style="color:red">Failed to create Account</p>'
+            }
+        }
+
+        async function signIn()
+        {
+            email = document.getElementById('loginEmail').value;
+            password = document.getElementById('loginPassword').value;
+
+            try
+            {
+                authData = await pb.collection('users').authWithPassword(email, password);
+                if (authData.record.email === email && authData.record.verified)
+                {
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('password', password);
+                    window.location.href = _new ? _refer_register : _refer_login;
+                }
+                else if (!authData.record.verified) document.getElementById('error').innerHTML = '<p style="color:red">Verify your Email</p>';
+                else throw '';
+            }
+            catch { document.getElementById('error').innerHTML = '<p style="color:red">Failed to Authorize</p>'; }
+        }
+    </script>
+</body>
+</html>

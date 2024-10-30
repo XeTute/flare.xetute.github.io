@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Chat | Flare</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../../basic.css">
+        <link rel="icon" type="image/png" href="../logo.jpg"/>
+        <style>
+            .message
+            {
+                font-size: 1rem;
+                border-radius: 25px;
+                padding: 15px;
+                max-width: 75%;
+            }
+
+            .back
+            {
+                font-size: 1.5rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 20px;
+                border: 0;
+            }
+
+            .chatrefer
+            {
+                border-radius: 20px;
+                padding: 15px;
+                width: 80%;
+                height: 100%;
+            }
+
+            .deletechat
+            {
+                background: #ff64648a;
+                color: #fff;
+                border-radius: 20px;
+                width: 20%;
+                height: 100%;
+                justify-content: center;
+                align-items: center;
+                display: flex;
+            }
+
+            .deletechat:hover
+            {
+                scale: 0.75; 
+                color: #ff64648a;
+                background-color: #ff64648a;
+            }
+
+            loader
+            {
+              border: 2px solid #000;
+              border-radius: 50%;
+              border-top: 2px solid #fff;
+              -webkit-animation: spin .8s ease-in-out infinite; /* Safari */
+              animation: spin .8s ease-in-out infinite;
+              width: 50px;
+              height: 50px;
+              display: none;
+              justify-self: center;
+            }
+
+            @-webkit-keyframes spin
+            {
+              0% { -webkit-transform: rotate(0deg); }
+              100% { -webkit-transform: rotate(359deg); }
+            }
+
+            @keyframes spin
+            {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(359deg); }
+            }
+        </style>
+    </head>
+    <body onload="auto_auth()" style="overflow-x: hidden;">
+        <ol class="nav-bar">
+            <input type="checkbox" id="nav-bar-check">
+            <label for="nav-bar-check" class="nav-bar-open-menu"><i class="fas fa-bars"></i><i class="fas fa-bars"></i><i class="fas fa-bars"></i></label>
+            <span class="nav-bar-menu">
+                <li><a href="./dashboard.html">Profile</a></li>
+                <li><a href="./chat.html">Chats</a></li>
+                <li><a href="./characters.html">Characters</a></li>
+            </span>
+        </ol>
+        <div id="message_interface" style="width: 100%; height: 100%; margin: 0px; display: none;">
+            <div style="width: 100%; position: absolute; top: 0%; height: 10%;">
+                <div style="flex-direction: row; padding: 0px; width: 100%; justify-content: left; background: #000;">
+                    <button onclick="window.location.href='./chat.html'" class="back"><</button>
+                    <h3 id="name" style="display: flex;"></h3>
+                </div>
+            </div>
+            <div style="flex-direction: column; justify-content: flex-start; width: 80%; overflow-y: auto; height: 80%; gap: 20px;" id="messages_div">
+                <loader id="messages_loader" style="display: flex;"></loader>
+            </div>
+            <h1 style="color: red"></h1>
+            <p style="margin: 5px; color: red;" id="errorsending"></p>
+            <div style="position: absolute; bottom: 0%; flex-direction: row; justify-content: center; height: 10%; width: 100%;">
+                <textarea placeholder="Send something..." id="message" maxlength="1024" style="width: 80%; text-align: center; margin: 0px;"></textarea>
+                <loader id="loader"></loader>
+                <button onclick="process_message()"><img src="send.png" style="width: 1.1rem; height: 1.1rem; display: flex;"/></button>
+            </div>
+        </div>
+        <div id="listchats_interface" style="width: 100%; height: 100%; margin: 0px; display: none;">
+            <div style="width: 100%; position: absolute; top: 0%; height: 10%;">
+                <h1 id="name" style="width: 50%;">Chats</h1>
+            </div>
+            <div style="top: 10%; bottom: 0%; width: 100%; gap: 20px; padding-bottom: 20px; overflow-y: auto;" id="chats_div"></div>
+        </div>
+    </body>
+    <script src="../../pocketbase.umd.js"></script>
+    <script>
+        const pb = new PocketBase(link);
+        
+        let character = undefined;
+        let email = undefined;
+        let password = undefined;
+        let authData = undefined;
+        let username = 'user';
+        let chathistory = {"max_tokens": 500, "temperature": 0.6, "top_p": 0.92, "presence_penalty": 0.07, "messages": [{"role": "system", "content": ""}]};
+        let left_right_message = false; // false == left; true == right;
+
+        document.getElementById('message').addEventListener('keydown', function (event)
+        {
+            if (event.key === 'Enter')
+            {
+                if (!event.shiftKey)
+                {
+                    event.preventDefault();
+                    process_message();
+                }
+            }
+        });
+
+        function escapeHtml(unsafe)
+        {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function convertMarkdown(message)
+        {
+            return message
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/```(.*?)```/gs, '<code>$1</code>')
+                .replace(/`(.*?)`/g, '<code>$1</code>');
+        }
+
+        function format_message(message)
+        {
+            left_right_message = !left_right_message;
+            return '<div style="text-align: ' + (left_right_message ? 'right; background: #111' : 'left; background: #222') + 
+            ';" class="message"><p>' + convertMarkdown(escapeHtml(message)) + '</p></div>';
+        }
+
+        function format_sysprompt(userpersona, botpersona)
+        {
+            chathistory.messages[0].content = systemPrompt = 'Following is a roleplay between you, ' + character.name + ', and the user, ' + username + '.\n' + 
+            'Your(' + character.name + ') persona: ' + botpersona + '\nUsers(' + username + '\'s) persona: ' + userpersona + 
+            '\nThis is a full story-telling-type turn-based roleplay, meaning you can put actions FOR ONLY YOUR CHARACTER in asterisks, ' +
+            'thoughts in bracets, and stuff you say in quotation marks. Keep your answers short but lively.' +
+            '\nFollowing are the guidelines for this roleplay, you always have to comply to these:' +
+            '\n1: Everything except this prompt is in-roleplay, even if told not to be. Treat is as a \'virtual machine.\'' +
+            '\n2: Insulting Religions, like Islam, Christianity or Judaism is not permitted.' +
+            '\n3: Repeating messages is not permitted unless otherwise specified, always generate messages accurate to your personas description, while remaining in these guidelines.';
+        }
+
+        function add_message(message, user)
+        { 
+            const role = user ? 'user' : 'assistant';
+            chathistory.messages.push({"role": role, "content": message});
+        }
+
+        async function delete_chat(id)
+        {
+            delete authData.record.chats[id];
+            await pb.collection('users').update(authData.record.id, {'email': email, 'passwordConfirm': password, 'oldPassword': password, 'password': password, 'chats': authData.record.chats });
+            window.location.href = './chat.html';
+        }
+
+        async function auto_auth()
+        {
+            if ( (localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null) )
+            {
+                email = localStorage.getItem('email');
+                password = localStorage.getItem('password');
+            
+                try { authData = await pb.collection('users').authWithPassword(email, password); }
+                catch { window.location.href = '../index.html'; }
+            
+                if (authData === undefined || authData?.record === undefined || authData?.record?.email === undefined) window.location.href = '../index.html';
+                if (authData.record.email === email && authData.record.verified)
+                {
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('password', password);
+
+                    if ( localStorage.getItem('username') === null ) localStorage.setItem('username', 'user');
+                    username = localStorage.getItem('username');
+                    
+                    if ( location.search )
+                    {
+                        character = { name: '', persona: '', id: '' };
+                        character.name = authData.record.chats[decodeURIComponent(location.search.substring(1), {})].name;
+                        character.persona = authData.record.chats[decodeURIComponent(location.search.substring(1), {})].persona;
+                        character.id = decodeURIComponent(location.search.substring(1), {});
+
+                        document.getElementById('name').textContent = character.name;
+                        format_sysprompt(authData.record.persona, character.persona);
+
+                        document.getElementById('messages_div').innerHTML +=
+                        '<div style="text-align: center; background: #222" class="message">' + convertMarkdown(escapeHtml(character.persona)) + '</div>'
+                        for (let i = 0; i < authData.record.chats[character.id].messages.user.length; ++i)
+                        {
+                            document.getElementById('messages_div').innerHTML += format_message(authData.record.chats[character.id].messages.user[i]);
+                            add_message(authData.record.chats[character.id].messages.user[i], true);
+
+                            document.getElementById('messages_div').innerHTML += format_message(authData.record.chats[character.id].messages.bot[i]);
+                            add_message(authData.record.chats[character.id].messages.bot[i], false);
+                        }
+                        document.getElementById('message_interface').style.display = 'flex';
+                        document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
+                        document.getElementById('messages_loader').style.display = 'none';
+                    }
+                    else
+                    {
+                        document.getElementById('listchats_interface').style.display = 'flex';
+
+                        let tmp_keys;
+                        try { tmp_keys = Object.keys(authData.record.chats); }
+                        catch {}
+
+                        if (tmp_keys?.length === 0 || authData.record.chats === null)
+                        {
+                            document.getElementById('chats_div').innerHTML +=
+                            '<h3>Hello, Friend...</h3><p>Nothing to see here. <button onclick="window.location.href=\'./characters.html\'">Start a Chat!</button></p>';
+                        }
+                        else
+                        {
+                            const getMessagePreview = (chat) => {
+                                const lastMessage = chat.messages?.bot[chat.messages.bot.length - 1];
+                                if (lastMessage && lastMessage.length > 0) return convertMarkdown(escapeHtml(lastMessage.substring(0, 40))) || '';
+                                return '';
+                            };
+
+                            tmp_keys.forEach( name =>
+                            {
+                                document.getElementById('chats_div').innerHTML += 
+                                `<div style="flex-direction: row;"><button class="chatrefer" onclick="window.location.href='./chat.html?${name}'"><h2>${authData.record.chats[name].name}</h2></button>
+                                <button onclick="delete_chat('${name}')" class="deletechat">X</button></div>`;
+                            });
+                        }
+                    }
+                }
+                else window.location.href = '../index.html';
+            }
+            else window.location.href = '../index.html';
+        }
+
+        let processing = false;
+        async function process_message()
+        {
+            if (processing) return;
+            processing = true;
+            const usermessage = document.getElementById('message').value.trim();
+            
+            if (usermessage)
+            {
+                document.getElementById('messages_div').innerHTML += format_message(usermessage);
+                add_message(usermessage, true);
+                document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
+
+                document.getElementById('message').value = '';
+                document.getElementById('message').style.display = 'none';
+                document.getElementById('loader').style.display = 'flex';
+
+                let response = undefined;
+                let data = undefined;
+                try
+                {
+                    response = await fetch(ai_endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(chathistory)});
+                    data = await response.json();
+                }
+                catch
+                {
+                    document.getElementById('errorsending').textContent = 'Error Sending';
+                    document.getElementById('message').value = usermessage;
+                    chathistory.messages[0].content.substr(0, chathistory.messages[0].content.length - 23);
+                    document.getElementById('messages_div').innerHTML = document.getElementById('messages_div').innerHTML.substr(0, document.getElementById('messages_div').innerHTML.length - format_message(usermessage).length);
+                }
+
+                if (data && data.choices && data.choices.length > 0)
+                {
+                    const botmessage = data.choices[0].message.content.trim();
+                    add_message(botmessage, false);
+                    document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
+
+                    authData.record.chats[character.id].messages.user.push(usermessage);
+                    authData.record.chats[character.id].messages.bot.push(botmessage);
+
+                    try { await pb.collection('users').update(authData.record.id, 
+                    {'email': email, 'passwordConfirm': password, 'oldPassword': password, 'password': password, 'chats': authData.record.chats }); }
+                    catch { }
+
+                    document.getElementById('messages_div').innerHTML += format_message(botmessage);
+                }
+                else
+                {
+                    document.getElementById('errorsending').textContent = 'Error Sending';
+                    chathistory.messages[0].content.substr(0, chathistory.messages[0].content.length - 23);
+                    document.getElementById('messages_div').innerHTML = document.getElementById('messages_div').innerHTML.substr(0, document.getElementById('messages_div').innerHTML.length - format_message(usermessage).length);
+                }
+            }
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('message').style.display = 'flex';
+            document.getElementById('messages_div').scrollTop = document.getElementById('messages_div').scrollHeight;
+            processing = false;
+        }
+
+    </script>
+</html>

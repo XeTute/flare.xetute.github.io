@@ -1,48 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>Authorisation | XeTute Technologies</title>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="Keywords" content="Login, Register, XeTute, XeTute Technologies, AI, LLM, Flare, Chat, Chatbot">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="basic.css">
-    <link rel="icon" type="image/png" href="logo.jpg"/>
-</head>
-<body onload="auto_auth()">
-    <div>
-        <h1 style="margin: 20px;">Hello, Friend.</h1>
-        <div id="loginForm">
-            <h2 style="margin-bottom: 10px;">Sign In</h2>
-            <input type="text" id="loginEmail" placeholder="Email" autocomplete="off" required>
-            <input type="password" id="loginPassword" placeholder="Password" autocomplete="off" required>
-            <button onclick="signIn()">Sign In</button>
-        </div>
-        <div id="registerForm" style="display: none;">
-            <h2 style="margin-bottom: 10px;">Sign Up</h2>
-            <input type="email" id="registerEmail" placeholder="Email" autocomplete="off" required>
-            <input type="password" id="registerPassword0" placeholder="Password" autocomplete="off" required>
-            <input type="password" id="registerPassword1" placeholder="Confirm Password" autocomplete="off" required>
-            <button onclick="register()">Sign Up</button>
-        </div>
-        <div style="margin-bottom: -20px; margin-top: 20px;">
-            <p id="error" style="font-size: 12.5px;"></p>
-            <p id="switch_txt" style="font-size: 12.5px; margin-bottom: 0px;">Not a part of the community yet?</p>
-            <button onclick="switch_forms()" style="border: 0;" id="switch_btn">Join in!</button>
-        </div>
-        <a href="./ToS.html" style="text-decoration: none; position: absolute; bottom: 5%;">By using our services, you accept our ToS.</a>
-    </div>
+    <head>
+        <title>XeTute Technologies</title>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="Keywords" content="XeTute, XeTute Technologies, AI, LLM, Flare, Chat, Chatbot">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="basic.css">
+        <link rel="icon" type="image/png" href="logo.jpg"/>
+    </head>
+    <style>
+        .tv
+        {
+            flex-direction: column;
+            border-radius: 10px;
+            border: 1px solid #fff;
+            margin: 10px;
+        }
 
+        .greeting
+        {
+            text-align: left;
+            color: #fff;
+            background: #000;
+            transition: .35s ease-in-out;
+            padding: 20px;
+            margin: 20px;
+            border: 1px solid #fff;
+            border-radius: 25px;
+        }
+
+        .greeting:hover
+        {
+            color: #000;
+            background: #fff;
+            border: 2px solid #111;
+        }
+
+        .cards
+        {
+            flex-direction: row;
+            gap: 20px;
+            width: 80%;
+            margin: 20px;
+        }
+
+        .card
+        {
+            border: 1px solid #fff;
+            border-radius: 15px;
+            padding: 15px;
+        }
+    </style>
+    <body onload="auto_auth()">
+        <div class="tv"> <!-- Old TV -->
+            <div class="greeting">
+                <h1>Hello, Friend.</h1>
+                <p>We're XeTute Technologies</p>
+            </div>
+            <div style="flex-direction: row; margin: 20px; margin-top: 0px;">
+                <p id="auth_txt_btn"></p>
+                <div style="flex-direction: column;"> <!-- Random Buttons for the TV -->
+                    <button style="border-radius: 50%; width: 20px; height: 20px;"></button>
+                    <button style="width: 20px; height: 20px;"></button>
+                </div>
+            </div>
+        </div>
+        <h2 style="margin-top: 20px; margin-bottom: 10px;">Our Latest Projects</h2>
+        <div class="cards" id="cards"></div>
+    </body>
     <script src="pocketbase.umd.js"></script>
-    <script>
+    <script defer>
         const pb = new PocketBase(link);
-        let c_form = false; // false = login, true = register
-        let _refer_login = './app/chat.html';
-        let _refer_register = './app/gs.html';
-        let _new = false;
-        
+
         let email = undefined;
         let password = undefined;
         let authData = undefined;
@@ -53,86 +85,21 @@
             {
                 email = localStorage.getItem('email');
                 password = localStorage.getItem('password');
-
                 try
                 {
                     authData = await pb.collection('users').authWithPassword(email, password);
-                    if (authData.record.email === email && authData.record.verified)
+                    if (authData?.record?.email === email && authData?.record?.verified)
                     {
                         localStorage.setItem('email', email);
                         localStorage.setItem('password', password);
-                        window.location.href = _refer_login;
+                        document.getElementById('auth_txt_btn').innerHTML = `<button style="color:green">You're authorized</button>`;
                     }
+                    else if (!authData?.record?.verified) document.getElementById('auth_txt_btn').innerHTML = `<button style="color:red">Verify your email</button>`;
+                    else document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html'">Join our Community</button>`;
                 }
-                catch { }
+                catch { document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html?https://www.xetute.com/;https://www.xetute.com/'">Join our Community</button>`; }
             }
+            else document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html?https://www.xetute.com/;https://www.xetute.com/'">Join our Community</button>`;
         }
-
-        function switch_forms()
-        {
-            if (c_form)
-            {
-                document.getElementById('loginForm').style.display = 'flex';
-                document.getElementById('registerForm').style.display = 'none';
-                document.getElementById('switch_txt').textContent = 'Not a part of the community yet?';
-                document.getElementById('switch_btn').textContent = 'Join in!';
-            }
-            else
-            {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'flex'; 
-                document.getElementById('switch_txt').textContent = 'Already part of the community?';
-                document.getElementById('switch_btn').textContent = 'Join back in!';
-            }
-            c_form = !c_form;
-        }
-
-        async function register()
-        {
-            email = document.getElementById('registerEmail').value;
-            _password = [ document.getElementById('registerPassword0').value, document.getElementById('registerPassword1').value ];
-            
-            if (_password[0] !== _password[1])
-            {
-                document.getElementById('error').innerHTML = `<p style="color:red">Passwords don't match</p>`;
-                return;
-            }
-            else document.getElementById('error').innerHTML = ''; // For re-try
-
-            try
-            {
-                await pb.collection('users').create({"password": _password[0], "passwordConfirm": _password[1], "email": email});
-                await pb.collection('users').requestVerification(email);
-                document.getElementById('error').innerHTML = '<p style="color:green">Sent verification Email</p>';
-                switch_forms();
-                _new = true;
-            }
-            catch
-            {
-                document.getElementById('error').innerHTML = '<p style="color:red">Failed to create Account</p>'
-            }
-        }
-
-        async function signIn()
-        {
-            email = document.getElementById('loginEmail').value;
-            password = document.getElementById('loginPassword').value;
-
-            try
-            {
-                authData = await pb.collection('users').authWithPassword(email, password);
-                if (authData.record.email === email && authData.record.verified)
-                {
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('password', password);
-                    window.location.href = _new ? _refer_register : _refer_login;
-                }
-                else if (!authData.record.verified) document.getElementById('error').innerHTML = '<p style="color:red">Verify your Email</p>';
-                else throw '';
-            }
-            catch { document.getElementById('error').innerHTML = '<p style="color:red">Failed to Authorize</p>'; }
-        }
-
     </script>
-</body>
 </html>
