@@ -123,7 +123,7 @@
                 try { authData = await pb.collection('users').authWithPassword(email, password); }
                 catch { console.log(''); }
             
-                if (authData === undefined) window.location.href = '../index.html';
+                if (authData === undefined) window.location.href = '../../auth.html';
                 if (authData.record.email === email && authData.record.verified)
                 {
                     localStorage.setItem('email', email);
@@ -139,9 +139,9 @@
                         document.getElementById('chargrid').innerHTML += charBoxTemplate(characters[i].name, characters[i].description, i);
                     }
                 }
-                else window.location.href = '../index.html';
+                else window.location.href = '../../auth.html';
             }
-            else window.location.href = '../index.html';
+            else window.location.href = '../../auth.html';
             document.getElementById('loader').style.display = 'none';
         }
 

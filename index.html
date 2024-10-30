@@ -41,7 +41,7 @@
 
         .cards
         {
-            flex-direction: row;
+            flex-direction: column;
             gap: 20px;
             width: 80%;
             margin: 20px;
@@ -49,9 +49,19 @@
 
         .card
         {
-            border: 1px solid #fff;
+            border: 0;
             border-radius: 15px;
+            padding: 0px;
+        }
+
+        .card a
+        {
+            margin: 0;
+            text-decoration: 0;
             padding: 15px;
+            border-radius: 15px;
+            width: 100%;
+            height: 100%;
         }
     </style>
     <body onload="auto_auth()">
@@ -68,7 +78,7 @@
                 </div>
             </div>
         </div>
-        <h2 style="margin-top: 20px; margin-bottom: 10px;">Our Latest Projects</h2>
+        <h2 style="margin-top: 20px; margin-bottom: 10px;">Recent Events</h2>
         <div class="cards" id="cards"></div>
     </body>
     <script src="pocketbase.umd.js"></script>
@@ -101,5 +111,21 @@
             }
             else document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html?https://www.xetute.com/;https://www.xetute.com/'">Join our Community</button>`;
         }
+
+        async function load_news()
+        {
+            try
+            {
+                const news = await pb.collection('company_news').getFullList({sort: '-created'});
+
+                for (let i = 0; i < news.length; ++i)
+                {
+                    document.getElementById('cards').innerHTML += 
+                    `<div class="card"><a href="./new.html?${news[i].id}"><strong>${news[i].title}</strong><p>${news[i].description}</p></a></div>`;
+                }
+            }
+            catch { document.getElementById('cards').innerHTML = `<div class="card" hreF="#"><strong style="color:red;">Failed to load</strong></div>`; }
+        }
+        load_news();
     </script>
 </html>
