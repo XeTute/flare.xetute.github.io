@@ -126,8 +126,6 @@
                 if (authData === undefined) window.location.href = '../../auth.html?./flare/app/gs.html;./flare/app/gs.html';
                 if (authData.record.email === email && authData.record.verified)
                 {
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('password', password);
 
                     if ( localStorage.getItem('username') === null ) localStorage.setItem('username', 'user');
                     username = localStorage.getItem('username');
