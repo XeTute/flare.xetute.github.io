@@ -125,7 +125,7 @@
         let password = undefined;
         let authData = undefined;
         let username = 'user';
-        let chathistory = {"max_tokens": 500, "temperature": 0.6, "top_p": 0.92, "presence_penalty": 0.07, "messages": [{"role": "system", "content": ""}]};
+        let chathistory = {"max_tokens": 500, "temperature": 0.7, "top_p": 0.92, "presence_penalty": 0.07, "messages": [{"role": "system", "content": ""}]};
         let left_right_message = false; // false == left; true == right;
 
         document.getElementById('message').addEventListener('keydown', function (event)
@@ -142,29 +142,23 @@
 
         function escapeHtml(unsafe)
         {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return unsafe.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         function convertMarkdown(message)
         {
-            return message
-                .replace(/\n/g, '<br>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/```(.*?)```/gs, '<code>$1</code>')
-                .replace(/`(.*?)`/g, '<code>$1</code>');
+            return message.replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/```(.*?)```/gs, '<code>$1</code>').replace(/`(.*?)`/g, '<code>$1</code>');
         }
 
         function format_message(message)
         {
             left_right_message = !left_right_message;
-            return '<div style="text-align: ' + (left_right_message ? 'right; background: #111' : 'left; background: #222') + 
-            ';" class="message"><p>' + convertMarkdown(escapeHtml(message)) + '</p></div>';
+            return `<div style="text-align:${left_right_message ? 'right; background: #111' : 'left; background: #222'};" class="message">
+            <p>${convertMarkdown(escapeHtml(message))}</p></div>`;
         }
 
         function format_sysprompt(userpersona, botpersona)
@@ -194,7 +188,7 @@
 
         async function auto_auth()
         {
-            if ( (localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null) )
+            if ((localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null))
             {
                 email = localStorage.getItem('email');
                 password = localStorage.getItem('password');
@@ -205,13 +199,10 @@
                 if (authData === undefined || authData?.record === undefined || authData?.record?.email === undefined) window.location.href = '../../auth.html?./flare/app/gs.html;./flare/app/gs.html';
                 if (authData.record.email === email && authData.record.verified)
                 {
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('password', password);
-
-                    if ( localStorage.getItem('username') === null ) localStorage.setItem('username', 'user');
+                    if (localStorage.getItem('username') === null) localStorage.setItem('username', 'user');
                     username = localStorage.getItem('username');
                     
-                    if ( location.search )
+                    if (location.search)
                     {
                         character = { name: '', persona: '', id: '' };
                         character.name = authData.record.chats[decodeURIComponent(location.search.substring(1), {})].name;
@@ -222,7 +213,7 @@
                         format_sysprompt(authData.record.persona, character.persona);
 
                         document.getElementById('messages_div').innerHTML +=
-                        '<div style="text-align: center; background: #222" class="message">' + convertMarkdown(escapeHtml(character.persona)) + '</div>'
+                        `<div style="text-align:center; background:#122" class="message"><p>${convertMarkdown(escapeHtml(character.persona))}</p></div>`;
                         for (let i = 0; i < authData.record.chats[character.id].messages.user.length; ++i)
                         {
                             document.getElementById('messages_div').innerHTML += format_message(authData.record.chats[character.id].messages.user[i]);
@@ -239,13 +230,12 @@
                     {
                         document.getElementById('listchats_interface').style.display = 'flex';
 
-                        let tmp_keys;
-                        try { tmp_keys = Object.keys(authData.record.chats); }
-                        catch {}
+                        let tmp_keys = undefined;
+                        try { tmp_keys = Object.keys(authData.record.chats); } catch {}
 
                         if (tmp_keys?.length === 0 || authData.record.chats === null)
                         {
-                            document.getElementById('chats_div').innerHTML +=
+                            document.getElementById('chats_div').innerHTML =
                             '<h3>Hello, Friend...</h3><p>Nothing to see here. <button onclick="window.location.href=\'./characters.html\'">Start a Chat!</button></p>';
                         }
                         else
@@ -259,8 +249,10 @@
                             tmp_keys.forEach( name =>
                             {
                                 document.getElementById('chats_div').innerHTML += 
-                                `<div style="flex-direction: row;"><button class="chatrefer" onclick="window.location.href='./chat.html?${name}'"><h2>${authData.record.chats[name].name}</h2></button>
-                                <button onclick="delete_chat('${name}')" class="deletechat">X</button></div>`;
+                                `<div style="flex-direction: row;"><button class="chatrefer" onclick="window.location.href='./chat.html?${name}'">
+                                    <h2>${authData.record.chats[name].name}</h2></button>
+                                    <button onclick="delete_chat('${name}')" class="deletechat">X</button>
+                                </div>`;
                             });
                         }
                     }
