@@ -88,34 +88,42 @@
         <div class="cards" id="cards"></div>
     </body>
     <script src="pocketbase.umd.js"></script>
-    <script defer>
-        const pb = new PocketBase(link);
+    <script>
+        const pb = new PocketBase(link); // link in pocketbase.umd.js
 
-        let email = undefined;
-        let password = undefined;
-        let authData = undefined;
+        let email, password, authData = undefined;
 
-        async function auto_auth()
+        async function autoSignIn(referSuccess, referFail)
         {
             if ((localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null))
             {
-                email = localStorage.getItem('email');
-                password = localStorage.getItem('password');
-                try
+                try { authData = await pb.collection('users').authRefresh(); }
+                catch
                 {
-                    authData = await pb.collection('users').authWithPassword(email, password);
-                    if (authData?.record?.email === email && authData?.record?.verified)
+                    try
                     {
-                        localStorage.setItem('email', email);
-                        localStorage.setItem('password', password);
-                        document.getElementById('auth_txt_btn').innerHTML = `<button style="color:green">You're authorized</button>`;
+                        email = localStorage.getItem('email');
+                        password = localStorage.getItem('password');
+
+                        authData = await pb.collection('users').authWithPassword(email, password);
+                        if (referSuccess !== undefined) window.location.href = referSuccess;
                     }
-                    else if (!authData?.record?.verified) document.getElementById('auth_txt_btn').innerHTML = `<button style="color:red">Verify your email</button>`;
-                    else document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html'">Join our Community</button>`;
+                    catch
+                    {
+                        if (referFail !== undefined) window.location.href = referFail; // For auth page
+                        return false;
+                    }
                 }
-                catch { document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html?https://www.xetute.com/;https://www.xetute.com/'">Join our Community</button>`; }
+                if (authData.record.verified && (referSuccess !== undefined)) window.location.href = referSuccess;
+                return true;
             }
-            else document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html?https://www.xetute.com/;https://www.xetute.com/'">Join our Community</button>`;
+        }
+    </script>
+    <script defer>
+        async function auto_auth()
+        {
+            if (await autoSignIn()) document.getElementById('auth_txt_btn').innerHTML = `<button style="color:green">You're authorized</button>`;
+            else document.getElementById('auth_txt_btn').innerHTML = `<button onclick="window.location.href='./auth.html?https://www.xetute.com/'">Join our Community</button>`;
         }
 
         async function load_news()
