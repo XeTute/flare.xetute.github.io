@@ -8,140 +8,148 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./basic.css">
+    <link rel="stylesheet" href="basic.css">
     <link rel="icon" type="image/png" href="logo.jpg"/>
 </head>
-<body onload="auto_auth()">
+<body onload="_autoSignIn()">
+    <h1>Hello, Friend.</h1>
+    <div id="signin">
+        <p>Let's continue where we left off.</p>
+        <input placeholder="Email" id="signin-inp-email" type="email" autocomplete="off" autofocus="on"/>
+        <input placeholder="Password" id="signin-inp-password" type="password"/>
+        <button onclick="_signIn('signin-inp-email', 'signin-inp-password')">Sign In</button>
+    </div>
+    <div id="signup" style="display: none;">
+        <p>Let's get you started.</p>
+        <input placeholder="Email" id="signup-inp-email" type="email" autocomplete="off" autofocus="on"/>
+        <input placeholder="Password" id="signup-inp-password0" type="password"/>
+        <input placeholder="Confirm Password" id="signup-inp-password1" type="password"/>
+        <button onclick="_signUp('signup-inp-email', 'signup-inp-password0', 'signup-inp-password1')">Sign Up</button>
+    </div>
+    <p id="note"></p>
     <div>
-        <h1 style="margin: 20px;">Hello, Friend.</h1>
-        <div id="loginForm">
-            <h2 style="margin-bottom: 10px;">Sign In</h2>
-            <input type="text" id="loginEmail" placeholder="Email" autocomplete="off" required>
-            <input type="password" id="loginPassword" placeholder="Password" autocomplete="off" required>
-            <button onclick="signIn()">Sign In</button>
-        </div>
-        <div id="registerForm" style="display: none;">
-            <h2 style="margin-bottom: 10px;">Sign Up</h2>
-            <input type="email" id="registerEmail" placeholder="Email" autocomplete="off" required>
-            <input type="password" id="registerPassword0" placeholder="Password" autocomplete="off" required>
-            <input type="password" id="registerPassword1" placeholder="Confirm Password" autocomplete="off" required>
-            <button onclick="register()">Sign Up</button>
-        </div>
-        <div style="margin-bottom: -20px; margin-top: 20px;">
-            <p id="error" style="font-size: 12.5px;"></p>
-            <p id="switch_txt" style="font-size: 12.5px; margin-bottom: 0px;">Not a part of the community yet?</p>
-            <button onclick="switch_forms()" style="border: 0;" id="switch_btn">Join in!</button>
-        </div>
-        <a href="./ToS.html" style="text-decoration: none; position: absolute; bottom: 5%;">By using our services, you accept our ToS.</a>
+        <p id="form-refer-txt">Not part of the Community yet?</p>
+        <button onclick="_switchForm()" id="form-refer-btn">Join in!</button>
     </div>
 
-    <script src="./pocketbase.umd.js"></script>
+    <script src="pocketbase.umd.js"></script>
     <script>
-        const pb = new PocketBase(link);
-        let c_form = false; // false = login, true = register
-        let _refer_login = undefined; // './flare/app/chat.html'
-        let _refer_register = undefined; // './flare/app/gs.html'
-        let _new = false;
-        
-        let email = undefined;
-        let password = undefined;
-        let authData = undefined;
+        const pb = new PocketBase(link); // link in pocketbase.umd.js
 
-        async function auto_auth()
+        let email, password, authData = undefined;
+
+        async function autoSignIn(referSuccess, referFail)
         {
-            if (location.search)
-            {
-                const tmp = decodeURIComponent(location.search.substring(1), {});
-                if (tmp)
-                {
-                    _refer_login = tmp.substr(0, tmp.search(';'));
-                    _refer_register = tmp.substr(tmp.search(';'));
-                }
-                else window.open('https://www.xetute.com/', '_self').close();
-            } else window.open('https://www.xetute.com/', '_self').close();
-
             if ((localStorage.getItem('email') !== null) && (localStorage.getItem('password') !== null))
             {
-                email = localStorage.getItem('email');
-                password = localStorage.getItem('password');
-
-                try
+                try { authData = await pb.collection('users').authRefresh(); }
+                catch
                 {
-                    authData = await pb.collection('users').authWithPassword(email, password);
-                    if (authData.record.email === email && authData.record.verified)
+                    try
                     {
-                        localStorage.setItem('email', email);
-                        localStorage.setItem('password', password);
-                        window.location.href = _refer_login;
+                        email = localStorage.getItem('email');
+                        password = localStorage.getItem('password');
+
+                        authData = await pb.collection('users').authWithPassword(email, password);
+                        if (referSuccess !== undefined) window.location.href = referSuccess;
+                    }
+                    catch
+                    {
+                        if (referFail !== undefined) window.location.href = referFail; // For auth page
+                        return;
                     }
                 }
-                catch { }
+                if (authData.record.verified && (referSuccess !== undefined)) window.location.href = referSuccess;
             }
         }
 
-        function switch_forms()
+        async function signIn(emailID, passID, referSuccess, referFail)
         {
-            if (c_form)
+            email = document.getElementById(emailID).value;
+            password = document.getElementById(passID).value;
+
+            try { authData = await pb.collection('users').authWithPassword(email, password); }
+            catch { if (referFail !== undefined) window.location.href = referFail; return false; }
+
+            localStorage.setItem('email', email);
+            localStorage.setItem('password', password);
+
+            if (referSuccess !== undefined && authData.record.verified) window.location.href = referSuccess;
+            return true;
+        }
+
+        async function signUp(emailID, passID1, passID0, noteID)
+        {
+            email = document.getElementById(emailID).value;
+            password = document.getElementById(passID0).value;
+
+            console.log(document.getElementById(emailID).value);
+            const data =
             {
-                document.getElementById('loginForm').style.display = 'flex';
-                document.getElementById('registerForm').style.display = 'none';
-                document.getElementById('switch_txt').textContent = 'Not a part of the community yet?';
-                document.getElementById('switch_btn').textContent = 'Join in!';
+                "password": password,
+                "passwordConfirm": document.getElementById(passID1).value,
+                "email": email,
+                "verified": false, // If you're reading this, try setting it to true to feel like a hacker till you get an error.
+            };
+
+            try { authData = await pb.collection('users').create(data); }
+            catch { return false; }
+
+            localStorage.setItem('email', email);
+            localStorage.setItem('password', password);
+
+            try { await pb.collection('users').requestVerification(email); }
+            catch { return false; }
+            document.getElementById(noteID).innerHTML = '<p style="color:green">Send verification Email</p>';
+            return true;
+        }
+
+        function switchForm(elem0, elem1)
+        {
+            if (document.getElementById(elem0).style.display === 'none')
+            {
+                document.getElementById(elem0).style.display = 'flex';
+                document.getElementById(elem1).style.display = 'none';
             }
             else
             {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'flex'; 
-                document.getElementById('switch_txt').textContent = 'Already part of the community?';
-                document.getElementById('switch_btn').textContent = 'Join back in!';
-            }
-            c_form = !c_form;
-        }
-
-        async function register()
-        {
-            email = document.getElementById('registerEmail').value;
-            _password = [ document.getElementById('registerPassword0').value, document.getElementById('registerPassword1').value ];
-            
-            if (_password[0] !== _password[1])
-            {
-                document.getElementById('error').innerHTML = `<p style="color:red">Passwords don't match</p>`;
-                return;
-            }
-            else document.getElementById('error').innerHTML = ''; // For re-try
-
-            try
-            {
-                await pb.collection('users').create({"password": _password[0], "passwordConfirm": _password[1], "email": email});
-                await pb.collection('users').requestVerification(email);
-                document.getElementById('error').innerHTML = '<p style="color:green">Sent verification Email</p>';
-                switch_forms();
-                _new = true;
-            }
-            catch
-            {
-                document.getElementById('error').innerHTML = '<p style="color:red">Failed to create Account</p>'
+                document.getElementById(elem1).style.display = 'flex';
+                document.getElementById(elem0).style.display = 'none';
             }
         }
+    </script>
+    <script>
+        let refer = undefined;
 
-        async function signIn()
+        if (location.search) { refer = decodeURIComponent(location.search.substr(1), {}); }
+        else window.location.href = 'https://xetute.com';
+
+        function _autoSignIn() { autoSignIn(refer); }
+
+        async function _signIn(emailID, passID)
         {
-            email = document.getElementById('loginEmail').value;
-            password = document.getElementById('loginPassword').value;
+            if (!(await signIn(emailID, passID, refer, undefined))) { document.getElementById('note').innerHTML = '<p style="color:red">Failed to Sign In</p>'; }
+        }
 
-            try
+        function _switchForm()
+        {
+            switchForm('signin', 'signup');
+            if (document.getElementById('signin').style.display === 'none')
             {
-                authData = await pb.collection('users').authWithPassword(email, password);
-                if (authData.record.email === email && authData.record.verified)
-                {
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('password', password);
-                    window.location.href = _new ? _refer_register : _refer_login;
-                }
-                else if (!authData.record.verified) document.getElementById('error').innerHTML = '<p style="color:red">Verify your Email</p>';
-                else throw '';
+                document.getElementById('form-refer-txt').textContent = 'Already part of the community?';
+                document.getElementById('form-refer-btn').textContent = 'Continue!';
             }
-            catch { document.getElementById('error').innerHTML = '<p style="color:red">Failed to Authorize</p>'; }
+            else
+            {
+                document.getElementById('form-refer-txt').textContent = 'Not part of the Community yet?';
+                document.getElementById('form-refer-btn').textContent = 'Join in!';
+            }
+        }
+
+        async function _signUp(emailID, passID0, passID1)
+        {
+            if (!(await signUp(emailID, passID0, passID1, 'note'))) { document.getElementById('note').innerHTML = '<p style="color:red">Failed to Sign Up</p>'; }
+            else _switchForm();
         }
     </script>
 </body>
