@@ -57,10 +57,11 @@
                     catch
                     {
                         if (referFail !== undefined) window.location.href = referFail; // For auth page
-                        return;
+                        return false;
                     }
                 }
                 if (authData.record.verified && (referSuccess !== undefined)) window.location.href = referSuccess;
+                return true;
             }
         }
 
