@@ -14,23 +14,24 @@
 <body onload="_autoSignIn()">
     <h1>Hello, Friend.</h1>
     <div id="signin">
-        <p>Let's continue where we left off.</p>
+        <p style="margin-bottom: 20px;">Let's continue where we left off.</p>
         <input placeholder="Email" id="signin-inp-email" type="email" autocomplete="off" autofocus="on"/>
         <input placeholder="Password" id="signin-inp-password" type="password"/>
         <button onclick="_signIn('signin-inp-email', 'signin-inp-password')">Sign In</button>
     </div>
     <div id="signup" style="display: none;">
-        <p>Let's get you started.</p>
+        <p style="margin-bottom: 20px;">Let's get you started.</p>
         <input placeholder="Email" id="signup-inp-email" type="email" autocomplete="off" autofocus="on"/>
         <input placeholder="Password" id="signup-inp-password0" type="password"/>
         <input placeholder="Confirm Password" id="signup-inp-password1" type="password"/>
         <button onclick="_signUp('signup-inp-email', 'signup-inp-password0', 'signup-inp-password1')">Sign Up</button>
     </div>
     <p id="note"></p>
-    <div>
+    <div style="margin: 20px; padding: 10px;">
         <p id="form-refer-txt">Not part of the Community yet?</p>
         <button onclick="_switchForm()" id="form-refer-btn">Join in!</button>
     </div>
+    <a style="position: absolute; bottom: 3.5%; text-decoration: none;" href="ToS.html">By creating an account, you accept our ToS</a>
 
     <script src="pocketbase.umd.js"></script>
     <script>
